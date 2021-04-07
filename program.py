@@ -30,6 +30,11 @@ class student :
             return -10
 
 
+"""
+Un chromosome est une liste d'étudiants pour lesquels on a attribué un horaire de passage pour l'exam.
+Un chromosome est une "alternative" une proposition de solution au problème.
+Donc pour calculer le score de ce chromosome, qui est l'appréciation globale de l'attribution d'horaires, on calcule le score par étudiant (cf. classe student)
+"""
 class chromosome :
     def __init__(self, studentList):
         self.studentList = studentList
@@ -48,25 +53,34 @@ class chromosome :
             
 
         
-
+"""
+Génération des dates : par défaut -> 01 juin à 05 juin, 08 juin à 12 juin
+"""
 numbList = []
-nStudent = 0 # sera incrémenté par après
 
-# Dates par défaut : 01 juin à 05 juin, 08 juin à 12 juin
 for i in range(1,6) :
     numbList.append(i)
     numbList.append(i+5)
     numbList.append(i+10)
 
 dateList = [str(elem) + "/06/2021" for elem in numbList]
-studentList = []
 nParJour = 14
+
+"""
+Réception des préférences via le fichier csv "preferences.csv" où les données commencent à la première ligne
+"""
+studentList = []
 
 with open("preferences.csv", "r") as file :
     csvReader = csv.reader(file)
     for row in csvReader :
+        # colonne = matricule, date1, date2, date3
         studentList.append(student(row))
 
+
+"""
+Génération d'une population de 10 chromosomes : 10 listes d'étudiants, dans un ordre aléatoire 
+"""
 population = []
 for i in range(10) :
     copied = studentList.copy()
@@ -75,7 +89,12 @@ for i in range(10) :
 
 
 
+"""
+Pour chaque chromosome dans la population, on commence par attribuer la date préférée au n°1 de la liste, puis on s'attaque au numéro 2, etc.
+S'il y a un conflit (jour déjà complet), on passe à la 2eme date préférée. Etc.
 
+Le problème est qu'ici, l'ordre dans la liste des étudiants compte. Mais ça ne sera pas un problème par la suite.
+"""
 for chrom in population :
     occupation = dict()
     for date in dateList :
@@ -101,11 +120,13 @@ for chrom in population :
             date = random.sample(dateList, 1)[0]
             while occupation[date] > nParJour :
                 date = random.sample(dateList, 1)[0]
+            #print("Pour l'étudiant {} de date préférées {}, {}, {}, nous n'avons trouvé aucune date. Nous allons vers {}".format(stud.matricule, stud.date1, stud.date2, stud.date3, date))
             stud.addDate(date)
             occupation[date] += 1
-            #print("Pour l'étudiant {} de date préférées {}, {}, {}, nous n'avons trouvé aucune date. Nous allons vers {}".format(stud.matricule, stud.date1, stud.date2, stud.date3, date))
 
     print(chrom.computeScore())
+
+
 """
 Two-point crossover
 """
@@ -122,3 +143,5 @@ def crossover(chrom1, chrom2) :
 
     print(chrom1.studentList)
     print(chrom2.studentList)
+
+    # To be completed
