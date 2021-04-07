@@ -34,6 +34,12 @@ class chromosome :
     def __init__(self, studentList):
         self.studentList = studentList
     
+    def __str__(self) :
+        matricList = []
+        for stud in self.studentList :
+            matricList.append(str(stud))
+        return "J'imprime un chromosome : "+ str(matricList) + "\n"
+
     def computeScore(self) :
         score = 0
         for stud in self.studentList :
@@ -61,45 +67,45 @@ with open("preferences.csv", "r") as file :
     for row in csvReader :
         studentList.append(student(row))
 
-chrom = chromosome(studentList)
-population = [chromosome(chrom.studentList.copy()) for i in range(10)]
-for chromo in population:
-    studList = []
-    for stud in chromo.studentList :
-        studList.append(str(stud))
-    print(str(studList) + "\n")            
+population = []
+for i in range(10) :
+    copied = studentList.copy()
+    random.shuffle(copied)
+    population.append(chromosome(copied))
 
 
-occupation = dict()
-for date in dateList :
-    occupation[date] = 0 
 
-    
-for stud in studentList :
-    if(occupation[stud.date1] < nParJour) :
-        #print("Préférence 1 pour l'étudiant {}".format(stud.matricule))
-        stud.addDate(stud.date1)
-        occupation[stud.date1] += 1
 
-    elif (occupation[stud.date2] < nParJour) :
-        #print("Préférence 2 pour l'étudiant {}".format(stud.matricule))
-        stud.addDate(stud.date2)
-        occupation[stud.date2] += 1
-    
-    elif (occupation[stud.date3] < nParJour) :
-        #print("Préférence 3 pour l'étudiant {}".format(stud.matricule))
-        stud.addDate(stud.date3)
-        occupation[stud.date3] += 1
+for chrom in population :
+    occupation = dict()
+    for date in dateList :
+        occupation[date] = 0 
+    studentList = chrom.studentList
+    for stud in studentList :
+        if(occupation[stud.date1] < nParJour) :
+            #print("Préférence 1 pour l'étudiant {}".format(stud.matricule))
+            stud.addDate(stud.date1)
+            occupation[stud.date1] += 1
 
-    else :
-        date = random.sample(dateList, 1)[0]
-        while occupation[date] > nParJour :
+        elif (occupation[stud.date2] < nParJour) :
+            #print("Préférence 2 pour l'étudiant {}".format(stud.matricule))
+            stud.addDate(stud.date2)
+            occupation[stud.date2] += 1
+        
+        elif (occupation[stud.date3] < nParJour) :
+            #print("Préférence 3 pour l'étudiant {}".format(stud.matricule))
+            stud.addDate(stud.date3)
+            occupation[stud.date3] += 1
+
+        else :
             date = random.sample(dateList, 1)[0]
-        stud.addDate(date)
-        occupation[date] += 1
-        #print("Pour l'étudiant {} de date préférées {}, {}, {}, nous n'avons trouvé aucune date. Nous allons vers {}".format(stud.matricule, stud.date1, stud.date2, stud.date3, date))
+            while occupation[date] > nParJour :
+                date = random.sample(dateList, 1)[0]
+            stud.addDate(date)
+            occupation[date] += 1
+            #print("Pour l'étudiant {} de date préférées {}, {}, {}, nous n'avons trouvé aucune date. Nous allons vers {}".format(stud.matricule, stud.date1, stud.date2, stud.date3, date))
 
-
+    print(chrom.computeScore())
 """
 Two-point crossover
 """
