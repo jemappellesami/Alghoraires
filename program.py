@@ -43,7 +43,7 @@ class chromosome :
         matricList = []
         for stud in self.studentList :
             matricList.append(str(stud))
-        return "J'imprime un chromosome : "+ str(matricList) + "\n"
+        return str(matricList) + "\n"
 
     def computeScore(self) :
         score = 0
@@ -124,12 +124,62 @@ for chrom in population :
             stud.addDate(date)
             occupation[date] += 1
 
-    print(chrom.computeScore())
+    #print(chrom.computeScore())
 
 
 """
 Two-point crossover
 """
+
+### CROSS OVER (cf. algorithm for Flowshop (INFO-H3000))
+def cleanChromosome(givenChromosome, nLeft, nRight, matriculesToClean):
+    print(nLeft, nRight)
+    chrom = givenChromosome.studentList.copy()
+    studentsToRemove = []
+
+    """
+    Here we generate list of students from chromosomes whose ID match the students from matriculesToClean
+
+    Explanation : matriculesToClean comes from chromosome A, and we want to clean chromosome B. Students from chromosome A have a certain assigned date, thus
+    they are not the same students as in chromosome B, even with the same ID.
+    """
+    for stud in matriculesToClean :
+        for elem in givenChromosome.studentList :
+            if elem.matricule == stud :
+                studentsToRemove.append(elem)
+    
+    for stud in studentsToRemove :
+        chrom.pop(chrom.index(stud))
+
+    """
+    Now we split our chromosome in two parts : right and left zone of the crossover.
+    We fill the right zone by pushing all present genes to the left, then filling the right part (still in the zone
+    located at the right of the exchange zone !) with the first gene of the "chromosome of lefts", until we reach
+    length of the chromosome
+    Then, we fill the left part with the remaining
+    """
+    listRight = []
+    sizeListRight = len(givenChromosome.studentList) - nRight
+    listLeft = []
+    sizeListLeft = nLeft
+
+    # Extracting genes from remaining chromosome to form the right part
+    for gene in reversed(chrom) :
+        if gene in givenChromosome.studentList[nRight:] :
+            listRight.append(gene)
+            chrom.pop(-1)
+    listRight.reverse()
+
+    # Extracting from remaining chromosome to build the remaining right part with the first genes of the remaining chrom
+    while len(listRight) < sizeListRight :
+        listRight.append(chrom[0])
+        chrom.pop(0)
+
+    # Remaining genes are the left part of the exchange
+    listLeft = chrom
+    return chromosome(listLeft + studentsToRemove + listRight)
+
+
 
 def crossover(chrom1, chrom2) :
     size = len(chrom1.studentList)
@@ -140,8 +190,13 @@ def crossover(chrom1, chrom2) :
         t = x
         x = y
         y = t
+    toCleanFrom1 = (stud.matricule for stud in chrom2.studentList.copy()[x:y])
+    toCleanFrom2 = (stud.matricule for stud in chrom1.studentList.copy()[x:y])
 
-    print(chrom1.studentList)
-    print(chrom2.studentList)
+    firstChild = cleanChromosome(chrom1, x, y, toCleanFrom1)
+    secondChild = cleanChromosome(chrom2, x, y, toCleanFrom2)
 
-    # To be completed
+    return [firstChild, secondChild]
+
+
+
