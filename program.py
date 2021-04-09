@@ -6,12 +6,17 @@ class student :
         self.date1 = date1
         self.date2 = date2
         self.date3 = date3
+        self.allowedDate = ""
     
     def __init__(self, row) :
         self.matricule = row[0]
         self.date1 = row[1]
         self.date2 = row[2]
         self.date3 = row[3]
+        self.allowedDate = ""
+
+    def copy(self) :
+        return student([self.matricule, self.date1, self.date2, self.date3])
 
     def __str__(self) :
         return self.matricule
@@ -43,7 +48,7 @@ class chromosome :
         matricList = []
         for stud in self.studentList :
             matricList.append(str(stud))
-        return str(matricList) + "\n"
+        return str(["{} : {}".format(stud.matricule, stud.allowedDate) for stud in self.studentList])
 
     def computeScore(self) :
         score = 0
@@ -99,41 +104,47 @@ for chrom in population :
     occupation = dict()
     for date in dateList :
         occupation[date] = 0 
-    studentList = chrom.studentList
+
+    studentList = chrom.studentList.copy()
+    copyStudentsList = []
+
     for stud in studentList :
+        copyStud = stud.copy()
         if(occupation[stud.date1] < nParJour) :
-            #print("Préférence 1 pour l'étudiant {}".format(stud.matricule))
-            stud.addDate(stud.date1)
+            copyStud.addDate(stud.date1)
             occupation[stud.date1] += 1
 
         elif (occupation[stud.date2] < nParJour) :
-            #print("Préférence 2 pour l'étudiant {}".format(stud.matricule))
-            stud.addDate(stud.date2)
+            copyStud.addDate(stud.date2)
             occupation[stud.date2] += 1
         
         elif (occupation[stud.date3] < nParJour) :
-            #print("Préférence 3 pour l'étudiant {}".format(stud.matricule))
-            stud.addDate(stud.date3)
+            copyStud.addDate(stud.date3)
             occupation[stud.date3] += 1
 
         else :
             date = random.sample(dateList, 1)[0]
             while occupation[date] > nParJour :
                 date = random.sample(dateList, 1)[0]
-            #print("Pour l'étudiant {} de date préférées {}, {}, {}, nous n'avons trouvé aucune date. Nous allons vers {}".format(stud.matricule, stud.date1, stud.date2, stud.date3, date))
-            stud.addDate(date)
+            copyStud.addDate(date)
             occupation[date] += 1
 
-    #print(chrom.computeScore())
-
+        copyStudentsList.append(copyStud)
+    
+    # update population
+    population[population.index(chrom)] = chromosome(copyStudentsList)
+    
 
 """
 Two-point crossover
 """
 
 ### CROSS OVER (cf. algorithm for Flowshop (INFO-H3000))
-def cleanChromosome(givenChromosome, nLeft, nRight, matriculesToClean):
-    print(nLeft, nRight)
+"""
+Input : ..., studentsToClean : students from the other chromosome, to merge with givenChromosome
+"""
+def cleanChromosome(givenChromosome, nLeft, nRight, studentsToClean):
+
     chrom = givenChromosome.studentList.copy()
     studentsToRemove = []
 
@@ -143,9 +154,9 @@ def cleanChromosome(givenChromosome, nLeft, nRight, matriculesToClean):
     Explanation : matriculesToClean comes from chromosome A, and we want to clean chromosome B. Students from chromosome A have a certain assigned date, thus
     they are not the same students as in chromosome B, even with the same ID.
     """
-    for stud in matriculesToClean :
+    for stud in studentsToClean :
         for elem in givenChromosome.studentList :
-            if elem.matricule == stud :
+            if elem.matricule == stud.matricule :
                 studentsToRemove.append(elem)
     
     for stud in studentsToRemove :
@@ -177,7 +188,13 @@ def cleanChromosome(givenChromosome, nLeft, nRight, matriculesToClean):
 
     # Remaining genes are the left part of the exchange
     listLeft = chrom
-    return chromosome(listLeft + studentsToRemove + listRight)
+
+    # Generating list of students from studentsToClean
+    studentsToMerge = []
+    for stud in studentsToClean :
+        studentsToMerge.append(stud)
+
+    return chromosome(listLeft + studentsToMerge + listRight)
 
 
 
@@ -190,8 +207,8 @@ def crossover(chrom1, chrom2) :
         t = x
         x = y
         y = t
-    toCleanFrom1 = (stud.matricule for stud in chrom2.studentList.copy()[x:y])
-    toCleanFrom2 = (stud.matricule for stud in chrom1.studentList.copy()[x:y])
+    toCleanFrom1 = [stud for stud in chrom2.studentList.copy()[x:y]]
+    toCleanFrom2 = [stud for stud in chrom1.studentList.copy()[x:y]]
 
     firstChild = cleanChromosome(chrom1, x, y, toCleanFrom1)
     secondChild = cleanChromosome(chrom2, x, y, toCleanFrom2)
@@ -200,3 +217,10 @@ def crossover(chrom1, chrom2) :
 
 
 
+
+test = crossover(population[0], population[5])
+(chrom1, chrom2, chrom3, chrom4) = population[0], population[5], test[0], test[1]
+print(chrom1.computeScore())
+print(chrom2.computeScore())
+print(chrom3.computeScore())
+print(chrom4.computeScore())

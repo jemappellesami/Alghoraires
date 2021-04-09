@@ -10,3 +10,7 @@ for i in range(10) :
 
 for item in population :
     print(item)
+
+
+
+print(len([]))
